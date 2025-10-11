@@ -11,7 +11,7 @@ jobs:
         run: echo "Hello World!"
         
       - name: list all files un the folder
-      - run: ls -la  
+        run: ls -la  
 
       - name: Download Source code
         uses: actions/checkout@v5
