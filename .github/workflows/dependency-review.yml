@@ -1,0 +1,46 @@
+name: Dependency Review
+
+on: pull_request
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Dependency Review (GitHub)
+        uses: actions/dependency-review-action@v4
+        with:
+          comment-summary-in-pr: true
+
+      # --- (Opcional pero recomendado) SCA adicional con OWASP Dependency-Check ---
+      - name: OWASP Dependency-Check (SCA)
+        uses: dependency-check/Dependency-Check_Action@v4
+        with:
+          project: ${{ github.repository }}
+          path: .
+          format: 'HTML,JSON,SARIF'
+          out: reports/dependency-check
+          args: >
+            --scan ./package.json ./package-lock.json
+            --enableRetired
+
+      - name: Upload SCA SARIF to Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: reports/dependency-check/dependency-check-report.sarif
+
+      - name: Upload SCA reports as artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-reports
+          path: reports/dependency-check/**
+          if-no-files-found: ignore
